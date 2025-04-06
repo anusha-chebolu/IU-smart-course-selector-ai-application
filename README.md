@@ -72,7 +72,7 @@ The user interface offers an intuitive and engaging way to interact with the sys
 - **FastAPI:** For backend API integration.
 - **PostgreSQL:** Stores data for student profiles, login information, course details, completed courses, my course list, and course trends.
 - **pgvector:** Enables semantic search.
-- **Frontend:** Built using React, Redux, and TypeScript.
+- **Frontend:** Built using React, Redux, Reducx Toolkit and TypeScript.
 
 ## In Summary
 
