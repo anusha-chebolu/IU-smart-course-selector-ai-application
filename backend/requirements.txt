@@ -1,0 +1,32 @@
+fastapi
+uvicorn
+requests
+pydantic
+stamina
+tqdm
+pandas 
+numpy
+faiss-cpu
+tenacity
+anthropic
+sqlalchemy
+psycopg2-binary
+passlib[bcrypt]
+pgvector
+
+# AI and LLM Dependencies
+langchain
+langchain-core
+langchain-openai
+langchain-anthropic
+openai
+python-dotenv
+
+# LangSmith and Tracing (optional but can help)
+langsmith
+
+# Type hinting and utilities
+typing-extensions
+
+# Environment and configuration
+python-multipart

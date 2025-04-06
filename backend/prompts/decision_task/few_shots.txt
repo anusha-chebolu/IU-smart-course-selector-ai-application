@@ -1,0 +1,83 @@
+#Example Input:
+User: "I want to become a UX Designer"
+
+#Example Output In Json:
+{
+  "action": "recommendation",
+  "career_goal": "UX Designer",
+  "course_name": [],
+  "original_query": "I want to become a UX Designer",
+  "reasoning": "The user clearly expresses a career goal using 'I want to become', which aligns with the recommendation action."
+}
+
+#Example Input:
+User: "I want to become a UX Designer"
+
+#Example Output In Json:
+{
+  "action": "recommendation",
+  "career_goal": "UX Designer",
+  "course_name": [],
+  "original_query": "I want to become a UX Designer",
+  "reasoning": "The user clearly expresses a career goal using 'I want to become', which aligns with the recommendation action."
+}
+
+#Example Input:
+User: "I'm thinking of switching to Product Management. Any courses I should take?"
+
+#Example Output In Json:
+{
+  "action": "recommendation",
+  "career_goal": "Product Manager",
+  "course_name": [],
+  "original_query": "I'm thinking of switching to Product Management. Any courses I should take?",
+  "reasoning": "The user expresses intent to change their career path to Product Management, which justifies a recommendation."
+}
+
+#Example Input:
+User: "What topics are covered in Advanced Database Concepts?"
+
+#Example Output In Json:
+{
+  "action": "inquiry",
+  "career_goal": [],
+  "course_name": "Advanced Database Concepts",
+  "original_query": "What topics are covered in Advanced Database Concepts?",
+  "reasoning": "The user is directly asking about the content of a specific course, which fits the inquiry action."
+}
+
+#Example Input:
+User: "Can you tell me if Data Visualization is offered in the evening?"
+
+#Example Output In Json:
+{
+  "action": "inquiry",
+  "career_goal": [],
+  "course_name": "Data Visualization",
+  "original_query": "Can you tell me if Data Visualization is offered in the evening?",
+  "reasoning": "The user is inquiring about the timing of a specific course, which is classified as an inquiry."
+}
+
+#Example Input:
+User: "I love beating my friends"
+
+#Example Output In Json:
+{
+  "action": "clarification_needed",
+  "career_goal": [],
+  "course_name": [],
+  "original_query": "I love beating my friends",
+  "reasoning": "The query is playful and lacks any educational intent, career goal, or course reference. No valid classification can be made."
+}
+
+#Example Input:
+User: "I'm so lost. This semester has been overwhelming."
+
+#Example Output In Json:
+{
+  "action": "clarification_needed",
+  "career_goal": [],
+  "course_name": [],
+  "original_query": "I'm so lost. This semester has been overwhelming.",
+  "reasoning": "The user is expressing emotional distress without providing a clear goal or inquiry. It’s unclear what help they need, so clarification is required."
+}

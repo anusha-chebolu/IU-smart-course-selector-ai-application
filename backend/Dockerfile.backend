@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# uncomment the below line and update the directory path
+# RUN mkdir -p <base upload directory path> && chmod 777 <base upload directory path> 
+
+COPY . .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+EXPOSE 8000
+
+ENV FAISS_INDEX_DIRECTORY=''
+ENV EMBEDDING_API_URL=''
+ENV ANTHROPIC_API_KEY=''
+ENV ANTHROPIC_MODEL=''
+
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

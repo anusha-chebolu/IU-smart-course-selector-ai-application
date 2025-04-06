@@ -1,0 +1,108 @@
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'COMPUTER SCIENCE FOUNDATIONS', 3, '098542', 2024, 'Summer', 2.0, '2024-08-16');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'COMPUTER PROGRAMMING II', 4, '011234', 2020, 'Fall', 3.0, '2020-12-20');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'ARTIFICIAL INTELLIGENCE I', 3, '011293', 2023, 'Spring', 4.0, '2023-05-14');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'COMPUTATION FOR SCIENTIFIC APPLICATIONS', 3, '089122', 2021, 'Summer', 3.7, '2021-08-10');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'SECURITY FOR NETWORKED SYSTEMS', 3, '092530', 2021, 'Spring', 3.3, '2021-05-19');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'SEMINAR IN COMPUTER SCIENCE', 3, '011297', 2022, 'Summer', 2.7, '2022-08-12');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'INTRODUCTION TO COMPUTER SCIENCE', 3, '097923', 2023, 'Fall', 4.0, '2023-12-20');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'FOUNDATIONS OF DIGITAL COMPUTING', 3, '011248', 2022, 'Fall', 3.3, '2022-12-22');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'INTRODUCTION TO PROGRAMMING', 4, '097614', 2020, 'Fall', 2.0, '2020-12-11');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'DATABASE SYSTEMS', 3, '011286', 2024, 'Summer', 2.7, '2024-08-15');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'PROGRAMMING IN GO (SEMINAR IN COMPUTER SCIENCE)', 3, '011297', 2022, 'Spring', 3.7, '2022-05-25');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'INTRODUCTION TO PROGRAMMING II', 4, '011140', 2020, 'Summer', 2.0, '2020-08-11');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'DATA STRUCTURES', 3, '011268', 2024, 'Summer', 3.0, '2024-08-18');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'SYSTEM ANALYSIS AND DESIGN', 3, '011260', 2020, 'Fall', 3.0, '2020-12-23');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'FUNDAMENTALS OF COMPUTER NETWORKS', 3, '011179', 2022, 'Spring', 4.0, '2022-05-19');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'PROBLEM SOLVING AND PROGRAMMING I', 4, '097927', 2024, 'Summer', 4.0, '2024-08-12');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'INTRODUCTORY STATISTICAL ANALYSIS WITH R', 3, '098123', 2022, 'Fall', 4.0, '2022-12-19');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'PROGRAMMING LANGUAGES', 3, '011262', 2020, 'Summer', 3.0, '2020-08-21');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'COMPUTER PROGRAMMING', 4, '097198', 2020, 'Spring', 2.3, '2020-05-13');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'COMPUTER STRUCTURES', 3, '011266', 2022, 'Fall', 1.0, '2022-12-12');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'INTRODUCTION TO COMPUTER SOFTWARE SYSTEMS', 4, '011235', 2024, 'Spring', 3.7, '2024-05-20');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'INTRODUCTION TO PROGRAMMING I', 4, '011139', 2024, 'Fall', 4.0, '2024-12-20');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'DATA STRUCTURES - PYTHON', 3, '097634', 2024, 'Summer', 1.0, '2024-08-22');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'WORD PROCESSING APPLICATIONS', 3, '080675', 2022, 'Spring', 3.3, '2022-05-25');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'WEB ENTERPRISE SYSTEMS', 4, '093393', 2023, 'Summer', 4.0, '2023-08-10');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'SPREADSHEET APPLICATIONS', 3, '080676', 2024, 'Fall', 3.0, '2024-12-16');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('hbishai', 'PROBLEM SOLVING AND PROGRAMMING II', 4, '098051', 2024, 'Summer', 2.3, '2024-08-24');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('k11', 'INTRODUCTION TO DIGITAL FORENSICS', 3, '096035', 2021, 'Spring', 2.7, '2021-05-14');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('k11', 'ANALYSIS OF ALGORITHMS I', 3, '011291', 2020, 'Summer', 3.0, '2020-08-15');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('k11', 'PROGRAMMING IN GO (SEMINAR IN COMPUTER SCIENCE)', 3, '011297', 2021, 'Summer', 3.7, '2021-08-10');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('k11', 'CAPSTONE PROJECT I DESIGN', 3, '088550', 2022, 'Summer', 3.3, '2022-08-11');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('k11', 'COMPUTATION FOR SCIENTIFIC APPLICATIONS', 3, '089122', 2020, 'Spring', 3.3, '2020-05-18');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('vpothapr', 'WORD PROCESSING APPLICATIONS', 3, '080675', 2020, 'Fall', 2.3, '2020-12-24');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('vpothapr', 'INTRODUCTORY STATISTICAL ANALYSIS WITH R', 3, '098123', 2023, 'Summer', 3.0, '2023-08-18');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('vpothapr', 'ARTIFICIAL INTELLIGENCE I', 3, '011293', 2023, 'Spring', 2.3, '2023-05-11');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('vpothapr', 'DATA STRUCTURES - PYTHON', 3, '097634', 2022, 'Fall', 2.0, '2022-12-19');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('vpothapr', 'COMPUTATION FOR SCIENTIFIC APPLICATIONS', 3, '089122', 2023, 'Spring', 3.0, '2023-05-18');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('vpothapr', 'ADVANCED PROGRAMMING', 3, '098036', 2023, 'Fall', 2.7, '2023-12-21');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('srcheb', 'SEMINAR IN COMPUTER SCIENCE', 3, '011297', 2020, 'Fall', 3.3, '2020-12-10');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('srcheb', 'ADVANCED PROGRAMMING', 3, '098036', 2020, 'Spring', 3.7, '2020-05-14');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('srcheb', 'COMPUTER STRUCTURES', 3, '011266', 2020, 'Summer', 2.3, '2020-08-17');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('srcheb', 'PROBLEM SOLVING AND PROGRAMMING I', 4, '097927', 2022, 'Summer', 4.0, '2022-08-24');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('srcheb', 'DATABASE SYSTEMS', 3, '011286', 2021, 'Summer', 2.3, '2021-08-13');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('srcheb', 'INTRODUCTION TO PROGRAMMING II', 4, '011140', 2022, 'Summer', 3.7, '2022-08-21');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('srcheb', 'COMPUTER PROGRAMMING II', 4, '011234', 2022, 'Fall', 3.0, '2022-12-10');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('srcheb', 'PROGRAMMING IN GO (SEMINAR IN COMPUTER SCIENCE)', 3, '011297', 2021, 'Spring', 3.7, '2021-05-24');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('jbudigin', 'COMPUTER STRUCTURES', 3, '011266', 2021, 'Fall', 2.7, '2021-12-23');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('jbudigin', 'DATA STRUCTURES - PYTHON', 3, '097634', 2022, 'Summer', 2.3, '2022-08-21');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('jbudigin', 'COMPUTER PROGRAMMING II', 4, '011234', 2024, 'Fall', 2.0, '2024-12-14');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('jbudigin', 'DATA STRUCTURES', 3, '011268', 2022, 'Spring', 2.0, '2022-05-16');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('jbudigin', 'INTRODUCTION TO PROGRAMMING II', 4, '011140', 2022, 'Summer', 4.0, '2022-08-19');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('jbudigin', 'WEB ENTERPRISE SYSTEMS', 4, '093393', 2022, 'Fall', 2.7, '2022-12-24');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('jbudigin', 'PROGRAMMING IN GO (SEMINAR IN COMPUTER SCIENCE)', 3, '011297', 2022, 'Spring', 2.0, '2022-05-16');
+INSERT INTO courses_completed (userid, title, credits, courseId, year, semester, grade, completed_date)
+VALUES ('jbudigin', 'WORD PROCESSING APPLICATIONS', 3, '080675', 2023, 'Fall', 4.0, '2023-12-16');
