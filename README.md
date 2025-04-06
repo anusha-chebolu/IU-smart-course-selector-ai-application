@@ -52,15 +52,13 @@ The user interface offers an intuitive and engaging way to interact with the sys
 
 - **Browse & Explore:**  
   Easily view a full course catalog complete with descriptions and prerequisites.  
-  ![Browse & Explore](docs/browse-explore.png)
-
+  
 - **Personal Course Management:**  
   Maintain a customized list of courses for upcoming semesters.  
-  ![Personal Course Management](docs/personal-course-management.png)
 
 - **Conversational Assistance:**  
   Chat with the system to receive recommendations, ask detailed questions, and add courses directly to your plan with a single click.  
-  ![Conversational Assistance](docs/conversational-assistance.png)
+  
 
 
 ---
