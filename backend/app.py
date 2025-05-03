@@ -10,7 +10,7 @@ from sqlalchemy.sql.expression import literal, except_
 from passlib.context import CryptContext
 import sqlalchemy as sa
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from postgresql_model import Login, StudentProfile, CourseDetails, CompletedCourse, MyCourseList, CourseTrends, ChatSession, ChatMessage, CareerPath
 from postgresql_model import CourseReview, RecommendationHistory
 from postgresql_model import Base
@@ -20,16 +20,12 @@ from anthropic_client import AnthropicClient
 from prompt_creator import PromptGenerator
 import re
 import json
-from sqlalchemy import select, func, and_, desc, cast, text
-from sqlalchemy.sql.expression import or_
-from sqlalchemy.dialects.postgresql import ARRAY
-from typing import List, Dict, Any, Optional
-import requests
 from pgvector.sqlalchemy import Vector
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 
-from course_recommendation_system import CourseRecommenderSystem
+# Import the new LangGraph-based system
+from course_recommendation_system_langgraph import CourseRecommenderSystem, SessionManager
 
 load_dotenv()
 
@@ -41,37 +37,19 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Global variables
-embedding_api_url       = os.environ.get("EMBEDDING_API_URL", "http://127.0.0.1:8001/embed")
-anthropic_key           = os.environ.get("ANTHROPIC_API_KEY", "")
-anthropic_client        = None
+embedding_api_url = os.environ.get("EMBEDDING_API_URL", "http://127.0.0.1:8001/embed")
+anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
+anthropic_client = None
 
 # Database connection
-DB_HOST     = os.environ.get("DB_HOST", "")
-DB_NAME     = os.environ.get("DB_NAME", "")
-DB_USER     = os.environ.get("DB_USER", "")
-DB_PASSWORD = os.environ.get("DB_PASSWORD", "")
-DB_PORT     = int(os.environ.get("DB_PORT", 5432))
-
-
-SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-PROMPTS_DIR = os.path.join(SCRIPT_DIR, "prompts")
-DECISION_PROMPT_DIR = os.path.join(PROMPTS_DIR, "decision_task")
-RECOMMEND_PROMPT_DIR = os.path.join(PROMPTS_DIR, "recommend_task")
-
-decision_base_prompt_file =  os.path.join(DECISION_PROMPT_DIR, "base_prompt.txt")
-decision_few_shot_examples_file = os.path.join(DECISION_PROMPT_DIR, "few_shots.txt")
-
-# DB Configuration
-db_config = {
-    "host": "localhost",
-    "port": 5432,
-    "database": "smart_search_course_recommendation",
-    "user": "postgres",
-    "password": "mz7zdz123"
-}
+DB_HOST = os.environ.get("DB_HOST", "localhost")
+DB_NAME = os.environ.get("DB_NAME", "smart_search_course_recommendation")
+DB_USER = os.environ.get("DB_USER", "postgres")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "mz7zdz123")
+DB_PORT = int(os.environ.get("DB_PORT", 5432))
 
 # SQLAlchemy setup
-DATABASE_URL = f"postgresql://{db_config['user']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['database']}"
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 
@@ -100,8 +78,6 @@ class UserResponse(BaseModel):
     last_name: str
     email: str
 
-
-# Response model for chat output
 class ChatResponse(BaseModel):
     response: str
     json_response: Optional[Dict] = None
@@ -117,12 +93,12 @@ class CourseTrendResponse(BaseModel):
     avg_gpa: float | None
     avg_hours_spent: float | None
 
-
-# # Setup database connection
-# DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}")
-# engine = create_engine(DATABASE_URL)
-# SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
+class ChatSessionResponse(BaseModel):
+    session_id: str
+    user_id: str
+    title: str
+    created_at: str
+    last_active: Optional[str] = None
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -132,7 +108,6 @@ def extract_json_string(response_text):
     
     if json_match:
         json_string = json_match.group(1)
-
         try:
             json.loads(json_string)
             return json_string, None
@@ -140,26 +115,19 @@ def extract_json_string(response_text):
             return None, f"Error: Extracted text is not valid JSON: {str(e)}"
     else:
         return None, "Error: No JSON found in the response"
-    
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize and clean up resources"""
     global embedding_api_url, anthropic_client
     try:
-
-        try:
-            # Test database connection
-            logger.info("Connecting to database...")
-            db = SessionLocal()
-            db.execute(text("SELECT 1"))
-            db.close()
-            logger.info("Successfully connected to database")
-        except Exception as e:
-            logger.warning(f"Could not connect to postgresql DB: {e}")
-            logger.warning("The service will start, but postgresql DB connection must be available when processing sql queries")
+        # Test database connection
+        logger.info("Connecting to database...")
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db.close()
+        logger.info("Successfully connected to database")
         
-
         # Test connection to embedding API
         embedding_api_url = os.environ.get("EMBEDDING_API_URL", "http://localhost:8001/embed")
         try:
@@ -173,20 +141,18 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"Could not connect to embedding API: {e}")
             logger.warning("The service will start, but embedding API must be available when processing queries")
-
-         # Initialize Anthropic client
+        
+        # Initialize Anthropic client
         try:
             anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")
-            anthropic_model = os.environ.get("ANTHROPIC_MODEL", "claude-3-5-sonnet-20240620")
+            anthropic_model = os.environ.get("ANTHROPIC_MODEL", "claude-3-7-sonnet-20250219")
             if anthropic_api_key:
                 anthropic_client = AnthropicClient(api_key=anthropic_api_key, model=anthropic_model)
                 logger.info(f"Successfully initialized Anthropic client with model: {anthropic_model}")
             else:
                 logger.warning("ANTHROPIC_API_KEY not found in environment variables")
-                logger.warning("RAG functionality will not be available")
         except Exception as e:
             logger.warning(f"Could not initialize Anthropic client: {e}")
-            logger.warning("RAG functionality will not be available")
         
         yield
     except Exception as e:
@@ -194,7 +160,6 @@ async def lifespan(app: FastAPI):
         raise
     finally:
         logger.info("Cleaning up resources...")
-
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -204,14 +169,17 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Add this after creating your FastAPI app
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins for development
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
+# Initialize global session manager
+session_manager = SessionManager()
 
 # Dependency to get the database session
 def get_db():
@@ -230,9 +198,7 @@ def verify_password(plain_password, hashed_password):
 
 @app.post("/signup", response_model=UserResponse)
 async def signup(user: UserCreate, db: Session = Depends(get_db)):
-    """
-    Register a new user account
-    """
+    """Register a new user account"""
     logger.info(f"Processing signup request for user_id: {user.user_id}")
     
     # Check if user already exists
@@ -243,16 +209,10 @@ async def signup(user: UserCreate, db: Session = Depends(get_db)):
     if existing_user:
         if existing_user.user_id == user.user_id:
             logger.warning(f"Signup failed: User ID {user.user_id} already exists")
-            raise HTTPException(
-                status_code=400,
-                detail="User ID already registered"
-            )
+            raise HTTPException(status_code=400, detail="User ID already registered")
         else:
             logger.warning(f"Signup failed: Email {user.email} already exists")
-            raise HTTPException(
-                status_code=400,
-                detail="Email already registered"
-            )
+            raise HTTPException(status_code=400, detail="Email already registered")
     
     # Hash password
     hashed_password = get_password_hash(user.password)
@@ -283,16 +243,11 @@ async def signup(user: UserCreate, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         logger.error(f"Error creating user: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error creating user: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
 
 @app.post("/login", response_model=UserResponse)
 async def login(credentials: UserLogin, db: Session = Depends(get_db)):
-    """
-    Authenticate user credentials
-    """
+    """Authenticate user credentials"""
     logger.info(f"Processing login request for user_id: {credentials.user_id}")
     
     # Find user
@@ -301,10 +256,7 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
     # Verify credentials
     if not user or not verify_password(credentials.password, user.password):
         logger.warning(f"Login failed for user_id: {credentials.user_id}")
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid credentials"
-        )
+        raise HTTPException(status_code=401, detail="Invalid credentials")
     
     # Update last login timestamp
     user.last_login = func.now()
@@ -316,15 +268,12 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
         "user_id": user.user_id,
         "first_name": user.first_name,
         "last_name": user.last_name,
-        "email": user.email,
-        "created_at": user.created_at
+        "email": user.email
     }
 
 @app.get("/course_catalog")
 async def get_course_catalog(db: Session = Depends(get_db)):
-    """
-    Fetch all courses from the database
-    """
+    """Fetch all courses from the database"""
     logger.info("Processing request to fetch all courses")
     
     try:
@@ -349,42 +298,34 @@ async def get_course_catalog(db: Session = Depends(get_db)):
             course_list.append(course_dict)
         
         logger.info(f"Successfully retrieved {len(course_list)} courses")
-        return {"courses": course_list[:200]}
+        return {"courses": course_list[:100]}
     
     except Exception as e:
         logger.error(f"Error fetching courses: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error fetching courses: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error fetching courses: {str(e)}")
 
-
-# Dependency to manage course recommender instances
-class CourseRecommenderManager:
-    _recommenders = {}
-
-    def get_recommender(self, user_id: str, db: Session = Depends(get_db)):
-        if user_id not in self._recommenders:
-            self._recommenders[user_id] = CourseRecommenderSystem(user_id, db)
-        return self._recommenders[user_id]
-
-recommender_manager = CourseRecommenderManager()
-@app.post("/chat")
-async def process_chat(request: ChatRequest, db: Session = Depends(get_db), 
-                       recommender_manager: CourseRecommenderManager = Depends(lambda: recommender_manager)):
-    """
-    Process a user query with Anthropic and return the generated response
-    """
+@app.post("/chat", response_model=ChatResponse)
+async def process_chat(request: ChatRequest, db: Session = Depends(get_db)):
+    """Process a user query with the LangGraph-based system"""
     logger.info(f"Processing chat request for user_id: {request.user_id}")
     
     try:
-
         if not request.user_id or not request.query:
-            raise HTTPException(status_code=400, details="User ID and query are required")
+            raise HTTPException(status_code=400, detail="User ID and query are required")
         
-        # Get or create recommender for this user
-        recommender = recommender_manager.get_recommender(request.user_id)
+        # Get or create session
+        if request.session_id:
+            # Try to get existing session
+            recommender = session_manager.get_session_by_id(request.session_id)
+            if not recommender:
+                # If session not found, create new one
+                recommender = session_manager.get_or_create_session(request.user_id, db)
+        else:
+            # Create new session
+            print("creating session id")
+            recommender = session_manager.get_or_create_session(request.user_id, db)
         
+        print("Processing User query")
         # Process the query
         response, agent_response, chat_title = recommender.process_query(request.query)
         
@@ -397,21 +338,76 @@ async def process_chat(request: ChatRequest, db: Session = Depends(get_db),
         )
     
     except HTTPException:
-        # Re-raise HTTP exceptions
         raise
     
     except Exception as e:
-        db.rollback()
         logger.error(f"Error in chat endpoint: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error processing chat request: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error processing chat request: {str(e)}")
+
+@app.get("/chat/sessions/{user_id}", response_model=List[ChatSessionResponse])
+async def get_user_sessions(user_id: str, db: Session = Depends(get_db)):
+    """Get all chat sessions for a user"""
+    logger.info(f"Fetching sessions for user_id: {user_id}")
     
+    try:
+        # Get sessions from session manager
+        sessions = session_manager.list_user_sessions(user_id)
+        
+        # Also get sessions from database
+        db_sessions = db.query(ChatSession).filter(ChatSession.user_id == user_id).all()
+        
+        # Merge and deduplicate sessions
+        all_sessions = {session['session_id']: session for session in sessions}
+        
+        for db_session in db_sessions:
+            if db_session.session_id not in all_sessions:
+                all_sessions[db_session.session_id] = {
+                    "session_id": db_session.session_id,
+                    "user_id": db_session.user_id,
+                    "title": db_session.title,
+                    "created_at": db_session.created_at.isoformat(),
+                    "last_active": db_session.last_active.isoformat() if db_session.last_active else None
+                }
+        
+        return list(all_sessions.values())
+    
+    except Exception as e:
+        logger.error(f"Error fetching sessions: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching sessions: {str(e)}")
+
+@app.get("/chat/messages/{session_id}")
+async def get_session_messages(session_id: str, db: Session = Depends(get_db)):
+    """Get all messages for a specific chat session"""
+    logger.info(f"Fetching messages for session_id: {session_id}")
+    
+    try:
+        messages = db.query(ChatMessage).filter(
+            ChatMessage.session_id == session_id
+        ).order_by(ChatMessage.created_at).all()
+        
+        return {
+            "session_id": session_id,
+            "messages": [
+                {
+                    "message_id": msg.message_id,
+                    "role": msg.role,
+                    "content": msg.content,
+                    "created_at": msg.created_at.isoformat()
+                }
+                for msg in messages
+            ]
+        }
+    
+    except Exception as e:
+        logger.error(f"Error fetching messages: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching messages: {str(e)}")
 
 @app.get("/trends/{course_id}", response_model=List[CourseTrendResponse])
 def get_course_trends(course_id: str, db: Session = Depends(get_db)):
-    trends = db.query(CourseTrends).filter(CourseTrends.course_id == course_id).order_by(CourseTrends.year.desc()).all()
+    """Get trends for a specific course"""
+    trends = db.query(CourseTrends).filter(
+        CourseTrends.course_id == course_id
+    ).order_by(CourseTrends.year.desc()).all()
 
     if not trends:
         raise HTTPException(status_code=404, detail="No trends found for this course")
@@ -428,10 +424,7 @@ async def health_check():
         return {"status": "healthy", "database": "connected"}
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
-        raise HTTPException(
-            status_code=503,
-            detail=f"Service unhealthy: {str(e)}"
-        )
+        raise HTTPException(status_code=503, detail=f"Service unhealthy: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

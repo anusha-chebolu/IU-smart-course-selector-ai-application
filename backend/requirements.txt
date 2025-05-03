@@ -16,6 +16,7 @@ pgvector
 
 # AI and LLM Dependencies
 langchain
+langgraph
 langchain-core
 langchain-openai
 langchain-anthropic
