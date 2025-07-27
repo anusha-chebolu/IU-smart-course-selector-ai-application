@@ -2,11 +2,10 @@ import os
 import logging
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
-from sqlalchemy import create_engine, func, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy import create_engine, func, select, text, desc, or_, and_, exists, column
-from sqlalchemy.sql.expression import literal, except_
+from sqlalchemy import create_engine, func, select, text, desc, or_, and_, exists, column, cast
+from sqlalchemy.sql.expression import literal, except_, or_
 from passlib.context import CryptContext
 import sqlalchemy as sa
 from contextlib import asynccontextmanager
@@ -14,15 +13,18 @@ from typing import Optional, List, Dict, Any
 from postgresql_model import Login, StudentProfile, CourseDetails, CompletedCourse, MyCourseList, CourseTrends, ChatSession, ChatMessage, CareerPath
 from postgresql_model import CourseReview, RecommendationHistory
 from postgresql_model import Base
-import requests
+from sqlalchemy.dialects.postgresql import ARRAY
 from vectorizer_models import VectorizerClient
 from anthropic_client import AnthropicClient
 from prompt_creator import PromptGenerator
+from pgvector.sqlalchemy import Vector
+from fastapi.middleware.cors import CORSMiddleware
 import re
 import json
-from pgvector.sqlalchemy import Vector
+import requests
+
+
 from dotenv import load_dotenv
-from fastapi.middleware.cors import CORSMiddleware
 
 # Import the new LangGraph-based system
 from course_recommendation_system_langgraph import CourseRecommenderSystem, SessionManager
@@ -37,16 +39,16 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Global variables
-embedding_api_url = os.environ.get("EMBEDDING_API_URL", "http://127.0.0.1:8001/embed")
-anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
-anthropic_client = None
+embedding_api_url       = os.environ.get("EMBEDDING_API_URL", "http://127.0.0.1:8001/embed")
+anthropic_key           = os.environ.get("ANTHROPIC_API_KEY", "")
+anthropic_client        = None
 
 # Database connection
-DB_HOST = os.environ.get("DB_HOST", "localhost")
-DB_NAME = os.environ.get("DB_NAME", "smart_search_course_recommendation")
-DB_USER = os.environ.get("DB_USER", "postgres")
-DB_PASSWORD = os.environ.get("DB_PASSWORD", "mz7zdz123")
-DB_PORT = int(os.environ.get("DB_PORT", 5432))
+DB_HOST                 = os.environ.get("DB_HOST", "localhost")
+DB_NAME                 = os.environ.get("DB_NAME", "smart_search_course_recommendation")
+DB_USER                 = os.environ.get("DB_USER", "postgres")
+DB_PASSWORD             = os.environ.get("DB_PASSWORD", "mz7zdz123")
+DB_PORT                 = int(os.environ.get("DB_PORT", 5432))
 
 # SQLAlchemy setup
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
@@ -121,12 +123,17 @@ async def lifespan(app: FastAPI):
     """Initialize and clean up resources"""
     global embedding_api_url, anthropic_client
     try:
-        # Test database connection
-        logger.info("Connecting to database...")
-        db = SessionLocal()
-        db.execute(text("SELECT 1"))
-        db.close()
-        logger.info("Successfully connected to database")
+        try:
+            # Test database connection
+            logger.info("Connecting to database...")
+            db = SessionLocal()
+            db.execute(text("SELECT 1"))
+            db.close()
+            logger.info("Successfully connected to database")
+        except Exception as e:
+            logger.warning(f"Could not connect to postgresql DB: {e}")
+            logger.warning("The service will start, but postgresql DB connection must be available when processing sql queries")
+        
         
         # Test connection to embedding API
         embedding_api_url = os.environ.get("EMBEDDING_API_URL", "http://localhost:8001/embed")
@@ -268,7 +275,8 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
         "user_id": user.user_id,
         "first_name": user.first_name,
         "last_name": user.last_name,
-        "email": user.email
+        "email": user.email,
+        "created_at": user.created_at
     }
 
 @app.get("/course_catalog")
@@ -402,17 +410,140 @@ async def get_session_messages(session_id: str, db: Session = Depends(get_db)):
         logger.error(f"Error fetching messages: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching messages: {str(e)}")
 
-@app.get("/trends/{course_id}", response_model=List[CourseTrendResponse])
-def get_course_trends(course_id: str, db: Session = Depends(get_db)):
-    """Get trends for a specific course"""
-    trends = db.query(CourseTrends).filter(
-        CourseTrends.course_id == course_id
-    ).order_by(CourseTrends.year.desc()).all()
+@app.get("/trends/{course_id}")
+async def get_course_trends(course_id: str, db: Session = Depends(get_db)):
+    """
+    Fetch trend data for a specific course and generate an analysis
+    """
+    logger.info(f"Processing request to fetch trend data for course_id: {course_id}")
+    
+    try:
+        global anthropic_client
+        # Query the course to get its name
+        course = db.query(CourseDetails).filter(CourseDetails.course_id == course_id).first()
+        
+        if not course:
+            logger.warning(f"Course with ID {course_id} not found")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Course with ID {course_id} not found"
+            )
+        
+        # Query the trends data
+        trends = db.query(CourseTrends).filter(CourseTrends.course_id == course_id).order_by(CourseTrends.year.desc()).all()
+        
+        if not trends:
+            logger.warning(f"No trend data found for course {course_id}")
+            raise HTTPException(
+                status_code=404,
+                detail="No trends found for this course"
+            )
+        
+        # Convert trends to a list of dictionaries for easier handling
+        trends_data = []
+        for trend in trends:
+            trend_dict = {
+                "year": trend.year,
+                "slots_filled": trend.slots_filled,
+                "total_slots": trend.total_slots,
+                "avg_rating": trend.avg_rating if trend.avg_rating else None,
+                "slots_filled_time": trend.slots_filled_time if trend.slots_filled_time else None,
+                "avg_gpa": trend.avg_gpa if trend.avg_gpa else None,
+                "avg_hours_spent": trend.avg_hours_spent if trend.avg_hours_spent else None
+            }
+            trends_data.append(trend_dict)
+        
+        print(trends_data)
+        # Generate trend analysis using Anthropic
+        if anthropic_client:
+            try:
+                # Create prompt for Anthropic
+                prompt = f"""
+                Analyze the following trend data for the course '{course.course_name}' (ID: {course_id}):
+                
+                {json.dumps(trends_data, indent=2)}
+                
+                Please provide a brief analysis of the trends over time considering:
+                1. Enrollment trends (slots_filled vs total_slots)
+                2. Student performance (avg_gpa)
+                3. Course difficulty (avg_hours_spent)
+                4. Student satisfaction (avg_rating)
+                
+                Focus on identifying patterns, significant changes, and potential insights that would be useful for students considering this course.
+                Keep your analysis concise and insightful.
+                """
+                
+                print("calling prompt")
+                # Call Anthropic API
+                analysis_response = anthropic_client.send_message(prompt)
+                trend_analysis = analysis_response.strip()
+                
+                logger.info(f"Successfully generated trend analysis for course {course_id}")
+            except Exception as e:
+                logger.error(f"Error generating trend analysis: {str(e)}")
+                trend_analysis = "Unable to generate trend analysis at this time."
+        else:
+            logger.warning("Anthropic client not initialized, skipping trend analysis")
+            trend_analysis = "Trend analysis not available."
+        
+        # Return both the raw trend data and the analysis
+        return {
+            "course_id": course_id,
+            "course_name": course.course_name,
+            "trends": trends_data,
+            "trend_analysis": trend_analysis
+        }
+    
+    except Exception as e:
+        logger.error(f"Error fetching course trends: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching course trends: {str(e)}"
+        )
 
-    if not trends:
-        raise HTTPException(status_code=404, detail="No trends found for this course")
+@app.get("/course_detail/{course_id}")
+async def get_course_detail(course_id: str, db: Session = Depends(get_db)):
+    """
+    Fetch details for a specific course by course_id
+    """
+    logger.info(f"Processing request to fetch course details for course_id: {course_id}")
+    
+    try:
+        # Query the specific course from the CourseDetails table
+        course = db.query(CourseDetails).filter(CourseDetails.course_id == course_id).first()
+        
+        if not course:
+            logger.warning(f"Course with ID {course_id} not found")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Course with ID {course_id} not found"
+            )
+        
+        
+        # Convert SQLAlchemy object to dictionary
+        course_dict = {
+            "course_id": course.course_id,
+            "course_name": course.course_name,
+            "department": course.department,
+            "min_credits": course.min_credits,
+            "max_credits": course.max_credits,
+            "prerequisites": course.prerequisites,
+            "offered_semester": course.offered_semester,
+            "course_title": course.course_title,
+            "course_description": course.course_description,
+            "course_details": course.course_details
+        }
+        
+        logger.info(f"Successfully retrieved details for course {course_id}")
+        return course_dict
+    
+    except Exception as e:
+        logger.error(f"Error fetching course details: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching course details: {str(e)}"
+        )
 
-    return trends
 
 @app.get("/health")
 async def health_check():
